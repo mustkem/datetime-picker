@@ -4,7 +4,7 @@
  * selected cells as a real date value.
  *
  * Open source under the MIT License.
- * https://github.com/OWNER/datetime-picker
+ * https://github.com/mustkem/datetime-picker
  */
 
 var DEFAULTS = {
