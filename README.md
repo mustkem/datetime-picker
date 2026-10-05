@@ -17,6 +17,8 @@ Google Sheets has a built-in date picker, but no way to pick a **time**. DateTim
 
 From the Google Workspace Marketplace (link added after approval), or install it yourself from source below.
 
+Website, privacy policy and terms: https://mustkem.github.io/datetime-picker/
+
 ## Usage
 
 1. Select one or more cells.
