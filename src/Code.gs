@@ -52,7 +52,7 @@ function openPicker() {
     target: range.getSheet().getName() + '!' + range.getA1Notation(),
     cellCount: range.getNumRows() * range.getNumColumns(),
     current: current.value,
-    zone: current.zone || settings.zone,
+    zone: settings.zone, // always open on the default zone (GMT+0 unless changed in Settings)
     toGmt: settings.toGmt,
     output: settings.output
   });
@@ -114,11 +114,10 @@ function insertDateTime(value, zone, target, toGmt) {
   if (!m) throw new Error('Pick a valid date and time.');
   if (!isValidZone_(zone)) throw new Error('Unknown time zone: ' + zone);
 
-  // Remember the last zone and GMT choice for this spreadsheet.
+  // The zone chosen here applies to this insert only; the default stays as set
+  // in Settings (GMT+0 unless the user changes it there).
   var settings = getSettings();
-  settings.zone = zone;
   settings.toGmt = !!toGmt;
-  settings = saveSettings(settings);
 
   var instant = zone === 'GMT'
     ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]))

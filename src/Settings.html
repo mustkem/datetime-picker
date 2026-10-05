@@ -53,7 +53,7 @@
       try { list = Intl.supportedValuesOf('timeZone'); } catch (e) {}
       ['GMT'].concat(list.filter(function (z) { return z !== 'GMT' && z !== 'UTC'; })).forEach(function (z) {
         var o = document.createElement('option');
-        o.value = z; o.textContent = z.replace(/_/g, ' ');
+        o.value = z; o.textContent = z === 'GMT' ? 'GMT+0 (default)' : z.replace(/_/g, ' ');
         $('zone').appendChild(o);
       });
       $('output').value = S.output;

@@ -87,7 +87,7 @@
       var sel = $('zone');
       zones().forEach(function (z) {
         var o = document.createElement('option');
-        o.value = z; o.textContent = z.replace(/_/g, ' ');
+        o.value = z; o.textContent = z === 'GMT' ? 'GMT+0 (default)' : z.replace(/_/g, ' ');
         sel.appendChild(o);
       });
       sel.value = zones().indexOf(DATA.zone) > -1 ? DATA.zone : 'GMT';
