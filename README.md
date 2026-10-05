@@ -5,6 +5,7 @@ Google Sheets has a built-in date picker, but no way to pick a **time**. DateTim
 ## Features
 
 - Pick date and time in one dialog
+- Inserts ISO 8601 text by default, e.g. `2026-11-12T16:00:00.000Z`, or a formatted date value if you prefer
 - Any time zone (GMT by default), with the live UTC offset shown
 - Optional "Convert to GMT" so every cell is stored in GMT
 - Works on a single cell or a whole selected range

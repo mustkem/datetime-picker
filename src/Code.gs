@@ -1,7 +1,7 @@
 /**
  * DateTime Picker - a Google Sheets editor add-on.
  * Pick a date and a time together, in any time zone, and insert it into the
- * selected cells as a real date value.
+ * selected cells, as ISO 8601 text (default) or as a formatted date value.
  *
  * Open source under the MIT License.
  * https://github.com/mustkem/datetime-picker
@@ -9,13 +9,15 @@
 
 var DEFAULTS = {
   zone: 'GMT',
-  dateOrder: 'dmy',   // dmy | mdy | ymd
-  clock: '12',        // 12 | 24
-  showZone: true,     // append the zone label to the cell format
-  toGmt: false        // convert the picked time to GMT before inserting
+  output: 'iso',      // iso: ISO 8601 text, e.g. 2026-11-12T16:00:00.000Z | date: real date value
+  toGmt: false,       // convert the picked time to GMT before inserting
+  dateOrder: 'dmy',   // date output only: dmy | mdy | ymd
+  clock: '12',        // date output only: 12 | 24
+  showZone: true      // date output only: append the zone label to the cell format
 };
 
 var DATE_PATTERNS = { dmy: 'dd/mm/yyyy', mdy: 'mm/dd/yyyy', ymd: 'yyyy-mm-dd' };
+var ISO_RE = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})(?::\d{2}(?:\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/;
 
 /* ---------- Menu ---------- */
 
@@ -43,18 +45,19 @@ function openPicker() {
     return;
   }
   var settings = getSettings();
-  var first = range.getCell(1, 1);
+  var current = readCell_(range.getCell(1, 1));
 
   var t = HtmlService.createTemplateFromFile('Picker');
   t.data = JSON.stringify({
     target: range.getSheet().getName() + '!' + range.getA1Notation(),
     cellCount: range.getNumRows() * range.getNumColumns(),
-    current: currentValue_(first),
-    zone: zoneFromFormat_(first.getNumberFormat()) || settings.zone,
-    toGmt: settings.toGmt
+    current: current.value,
+    zone: current.zone || settings.zone,
+    toGmt: settings.toGmt,
+    output: settings.output
   });
   SpreadsheetApp.getUi().showModalDialog(
-    t.evaluate().setWidth(380).setHeight(330),
+    t.evaluate().setWidth(380).setHeight(350),
     'Pick date and time'
   );
 }
@@ -63,13 +66,13 @@ function openSettings() {
   var t = HtmlService.createTemplateFromFile('Settings');
   t.data = JSON.stringify(getSettings());
   SpreadsheetApp.getUi().showModalDialog(
-    t.evaluate().setWidth(380).setHeight(400),
+    t.evaluate().setWidth(380).setHeight(460),
     'DateTime Picker settings'
   );
 }
 
 function openHelp() {
-  var html = HtmlService.createTemplateFromFile('Help').evaluate().setWidth(400).setHeight(330);
+  var html = HtmlService.createTemplateFromFile('Help').evaluate().setWidth(400).setHeight(360);
   SpreadsheetApp.getUi().showModalDialog(html, 'DateTime Picker help');
 }
 
@@ -86,10 +89,11 @@ function getSettings() {
 function saveSettings(settings) {
   var clean = {
     zone: isValidZone_(settings.zone) ? settings.zone : DEFAULTS.zone,
+    output: settings.output === 'date' ? 'date' : 'iso',
+    toGmt: !!settings.toGmt,
     dateOrder: DATE_PATTERNS[settings.dateOrder] ? settings.dateOrder : DEFAULTS.dateOrder,
     clock: settings.clock === '24' ? '24' : '12',
-    showZone: !!settings.showZone,
-    toGmt: !!settings.toGmt
+    showZone: !!settings.showZone
   };
   PropertiesService.getDocumentProperties().setProperty('settings', JSON.stringify(clean));
   return clean;
@@ -103,6 +107,7 @@ function saveSettings(settings) {
  * @param {string} zone   "GMT" or an IANA time zone id
  * @param {string} target "Sheet!A1:B2"
  * @param {boolean} toGmt convert to GMT before inserting
+ * @return {string} the text that was inserted (ISO) or a description
  */
 function insertDateTime(value, zone, target, toGmt) {
   var m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
@@ -115,16 +120,11 @@ function insertDateTime(value, zone, target, toGmt) {
   settings.toGmt = !!toGmt;
   settings = saveSettings(settings);
 
-  var wall = [+m[1], +m[2], +m[3], +m[4], +m[5]];
-  var label = zone;
-  if (toGmt && zone !== 'GMT') {
-    var instant = Utilities.parseDate(value, zone, "yyyy-MM-dd'T'HH:mm");
-    wall = Utilities.formatDate(instant, 'GMT', 'yyyy,MM,dd,HH,mm').split(',').map(Number);
-    label = 'GMT';
-  }
-
-  writeWallClock_(target, wall, label, settings);
-  return true;
+  var instant = zone === 'GMT'
+    ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]))
+    : Utilities.parseDate(value, zone, "yyyy-MM-dd'T'HH:mm");
+  var outZone = settings.toGmt ? 'GMT' : zone;
+  return write_(target, instant, outZone, settings);
 }
 
 function insertNow() {
@@ -135,26 +135,41 @@ function insertNow() {
   }
   var settings = getSettings();
   var zone = settings.toGmt ? 'GMT' : settings.zone;
-  var wall = Utilities.formatDate(new Date(), zone, 'yyyy,MM,dd,HH,mm').split(',').map(Number);
-  writeWallClock_(range.getSheet().getName() + '!' + range.getA1Notation(), wall, zone, settings);
+  write_(range.getSheet().getName() + '!' + range.getA1Notation(), new Date(), zone, settings);
 }
 
-/**
- * Writes the wall-clock time as a spreadsheet serial number, so the cell shows
- * exactly what was picked no matter what time zone the spreadsheet is set to.
- */
-function writeWallClock_(target, wall, label, settings) {
-  var ms = Date.UTC(wall[0], wall[1] - 1, wall[2], wall[3], wall[4]);
-  var serial = ms / 86400000 + 25569; // days since 1899-12-30
-
+/** Writes `instant`, expressed in `zone`, into every cell of `target`. */
+function write_(target, instant, zone, settings) {
   var range = SpreadsheetApp.getActive().getRange(target);
+  var value, format;
+
+  if (settings.output === 'date') {
+    // Store the wall-clock time as a serial number, so the cell shows exactly
+    // this time no matter what time zone the spreadsheet is set to.
+    var w = Utilities.formatDate(instant, zone, 'yyyy,MM,dd,HH,mm').split(',').map(Number);
+    value = Date.UTC(w[0], w[1] - 1, w[2], w[3], w[4]) / 86400000 + 25569;
+    format = buildFormat_(settings, zone);
+  } else {
+    value = toIso_(instant, zone);
+    format = '@'; // plain text, so Sheets keeps the ISO string as typed
+  }
+
   var values = [];
   for (var r = 0; r < range.getNumRows(); r++) {
     var row = [];
-    for (var c = 0; c < range.getNumColumns(); c++) row.push(serial);
+    for (var c = 0; c < range.getNumColumns(); c++) row.push(value);
     values.push(row);
   }
-  range.setNumberFormat(buildFormat_(settings, label)).setValues(values);
+  range.setNumberFormat(format).setValues(values);
+  return String(value);
+}
+
+/** ISO 8601 with milliseconds: "2026-11-12T16:00:00.000Z" or "...T21:30:00.000+05:30". */
+function toIso_(instant, zone) {
+  if (zone === 'GMT') return instant.toISOString();
+  var local = Utilities.formatDate(instant, zone, "yyyy-MM-dd'T'HH:mm:ss.SSS");
+  var z = Utilities.formatDate(instant, zone, 'Z'); // e.g. +0530
+  return local + (z === '+0000' ? 'Z' : z.slice(0, 3) + ':' + z.slice(3));
 }
 
 function buildFormat_(settings, label) {
@@ -164,17 +179,33 @@ function buildFormat_(settings, label) {
   return fmt;
 }
 
-/* ---------- Helpers ---------- */
+/* ---------- Reading the current cell ---------- */
 
-// Current cell value as "yyyy-MM-ddTHH:mm" (as displayed), or "" if not a date.
-function currentValue_(cell) {
+// Returns { value: "yyyy-MM-ddTHH:mm" or "", zone: zone id or "" } for the picker.
+function readCell_(cell) {
   var v = cell.getValue();
-  if (!(v instanceof Date)) return '';
-  var tz = SpreadsheetApp.getActive().getSpreadsheetTimeZone();
-  return Utilities.formatDate(v, tz, "yyyy-MM-dd'T'HH:mm");
+
+  if (typeof v === 'string') {
+    var m = v.trim().match(ISO_RE);
+    if (!m) return { value: '', zone: '' };
+    if (m[2] === 'Z') return { value: m[1], zone: 'GMT' };
+    // An offset like +05:30 does not name a zone; show the time as GMT instead.
+    var instant = new Date(v.trim());
+    if (isNaN(instant)) return { value: '', zone: '' };
+    return { value: Utilities.formatDate(instant, 'GMT', "yyyy-MM-dd'T'HH:mm"), zone: 'GMT' };
+  }
+
+  if (v instanceof Date) {
+    var tz = SpreadsheetApp.getActive().getSpreadsheetTimeZone();
+    return {
+      value: Utilities.formatDate(v, tz, "yyyy-MM-dd'T'HH:mm"),
+      zone: zoneFromFormat_(cell.getNumberFormat())
+    };
+  }
+  return { value: '', zone: '' };
 }
 
-// Reads the zone label we wrote into a cell's number format, if any.
+// Reads the zone label written into a cell's number format, if any.
 function zoneFromFormat_(format) {
   var m = String(format || '').match(/"([^"]+)"\s*$/);
   return m && isValidZone_(m[1]) ? m[1] : '';
@@ -182,11 +213,5 @@ function zoneFromFormat_(format) {
 
 function isValidZone_(zone) {
   if (zone === 'GMT') return true;
-  if (!/^[A-Za-z_]+(\/[A-Za-z0-9_+\-]+){1,2}$/.test(String(zone))) return false;
-  try {
-    Utilities.formatDate(new Date(), zone, 'Z');
-    return true;
-  } catch (e) {
-    return false;
-  }
+  return /^[A-Za-z_]+(\/[A-Za-z0-9_+\-]+){1,2}$/.test(String(zone));
 }

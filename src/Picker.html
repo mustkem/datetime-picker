@@ -25,6 +25,7 @@
       <label for="toGmt" style="margin:0;font-size:13px;color:#202124">Convert to GMT before inserting</label>
     </div>
 
+    <div class="preview" id="preview"></div>
     <div class="muted error" id="err"></div>
     <div class="actions">
       <button type="button" onclick="google.script.host.close()">Cancel</button>
@@ -62,10 +63,22 @@
         return p.year + '-' + p.month + '-' + p.day + 'T' + p.hour + ':' + p.minute;
       }
 
+      // The ISO 8601 text that will be inserted, e.g. "2026-11-12T16:00:00.000Z".
+      function isoPreview(zone, value, toGmt) {
+        if (!value) return '';
+        var off = zone === 'GMT' ? 'Z' : offsetLabel(zone, value).replace('GMT', '');
+        if (!off || off === '+00:00') off = 'Z';
+        var local = value.slice(0, 16) + ':00.000';
+        if (off === 'Z') return local + 'Z';
+        return toGmt ? new Date(local + off).toISOString() : local + off;
+      }
+
       function refresh() {
-        var z = $('zone').value;
-        $('offset').textContent = 'Offset: ' + offsetLabel(z, $('dt').value);
+        var z = $('zone').value, v = $('dt').value;
+        $('offset').textContent = 'Offset: ' + offsetLabel(z, v);
         $('toGmt').disabled = z === 'GMT';
+        var p = DATA.output === 'date' ? '' : isoPreview(z, v, $('toGmt').checked);
+        $('preview').textContent = p ? 'Inserts: ' + p : '';
       }
 
       // Init
@@ -83,6 +96,7 @@
       refresh();
 
       sel.addEventListener('change', refresh);
+      $('toGmt').addEventListener('change', refresh);
       $('dt').addEventListener('input', refresh);
       $('now').addEventListener('click', function () { $('dt').value = nowIn(sel.value); refresh(); });
       $('clear').addEventListener('click', function () { $('dt').value = ''; refresh(); });
