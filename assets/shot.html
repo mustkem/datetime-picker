@@ -1,0 +1,75 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body { margin:0; width:1280px; height:800px; font-family: Roboto, Arial, sans-serif; background:#f8f9fa; position:relative; overflow:hidden; color:#202124; }
+  .top { height:64px; background:#fff; display:flex; align-items:center; padding:0 16px; gap:12px; border-bottom:1px solid #e0e0e0; }
+  .logo { width:28px; height:36px; background:#0f9d58; border-radius:3px; }
+  .title { font-size:18px; }
+  .menu { font-size:14px; color:#444; display:flex; gap:16px; margin-left:12px; }
+  .menu b { font-weight:500; background:#e8f0fe; color:#1a73e8; padding:2px 6px; border-radius:4px; }
+  .bar { height:36px; background:#edf2fa; border-bottom:1px solid #e0e0e0; }
+  table { border-collapse:collapse; background:#fff; font-size:13px; }
+  td, th { border:1px solid #e2e3e3; height:22px; padding:0 8px; white-space:nowrap; }
+  th { background:#f8f9fa; color:#5f6368; font-weight:400; }
+  .rn { width:34px; text-align:center; background:#f8f9fa; color:#5f6368; }
+  .sel { outline:2px solid #1a73e8; outline-offset:-2px; background:#e8f0fe; }
+  .mono { font-family: "Roboto Mono", Menlo, monospace; }
+  .shade { position:absolute; inset:0; background:rgba(0,0,0,.32); }
+  .dlg { position:absolute; left:440px; top:170px; width:400px; background:#fff; border-radius:8px; box-shadow:0 8px 28px rgba(0,0,0,.3); padding:20px 22px; }
+  .dlg h3 { margin:0 0 14px; font-size:18px; font-weight:400; }
+  .muted { font-size:12px; color:#5f6368; }
+  label { display:block; font-size:12px; color:#5f6368; margin:12px 0 4px; }
+  .field { border:1px solid #dadce0; border-radius:4px; padding:8px; font-size:14px; display:flex; justify-content:space-between; }
+  .btns { display:flex; gap:8px; margin-top:8px; }
+  .btn { border:1px solid #dadce0; border-radius:4px; padding:7px 16px; font-size:14px; color:#1a73e8; background:#fff; }
+  .primary { background:#1a73e8; color:#fff; border-color:#1a73e8; }
+  .preview { margin-top:12px; font: 12px "Roboto Mono", Menlo, monospace; background:#f1f3f4; border-radius:4px; padding:7px 8px; }
+  .row { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+  .cal { position:absolute; left:860px; top:205px; width:300px; background:#fff; border-radius:8px; box-shadow:0 8px 28px rgba(0,0,0,.3); padding:14px; font-size:13px; }
+  .grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center; margin-top:8px; }
+  .grid span { padding:5px 0; border-radius:50%; }
+  .grid .on { background:#1a73e8; color:#fff; }
+  .times { display:flex; gap:8px; margin-top:12px; }
+  .times div { flex:1; border:1px solid #dadce0; border-radius:4px; padding:6px; text-align:center; }
+  .times .on { border-color:#1a73e8; color:#1a73e8; font-weight:500; }
+  .tag { position:absolute; left:40px; bottom:36px; font-size:28px; font-weight:500; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,.4); }
+</style></head>
+<body>
+  <div class="top"><div class="logo"></div><div><div class="title">Collectible drops</div><div class="menu">File Edit View Insert Format Data Tools <b>Extensions</b> Help</div></div></div>
+  <div class="bar"></div>
+  <table>
+    <tr><th class="rn"></th><th style="width:180px">A</th><th style="width:110px">B</th><th style="width:260px">C</th><th style="width:260px">D</th><th style="width:120px">E</th></tr>
+    <tr><td class="rn">1</td><td>name</td><td>rarity</td><td>dropDate</td><td>publishDate</td><td>dropMethod</td></tr>
+    <tr><td class="rn">2</td><td>Kraken Awakened</td><td>common</td><td class="mono">2026-11-12T16:00:00.000Z</td><td class="mono">2026-11-05T16:00:00.000Z</td><td>reservation</td></tr>
+    <tr><td class="rn">3</td><td>Griffin Sentinel</td><td>uncommon</td><td class="mono sel">2026-11-12T16:00:00.000Z</td><td class="mono">2026-11-05T16:00:00.000Z</td><td>reservation</td></tr>
+    <tr><td class="rn">4</td><td>Phoenix Reborn</td><td>rare</td><td class="mono">2026-12-01T09:30:00.000Z</td><td class="mono">2026-11-24T09:30:00.000Z</td><td>waitlist</td></tr>
+    <tr><td class="rn">5</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td class="rn">6</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td class="rn">7</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td class="rn">8</td><td></td><td></td><td></td><td></td><td></td></tr>
+  </table>
+  <div class="shade"></div>
+  <div class="dlg">
+    <h3>Pick date and time</h3>
+    <div class="muted">Inserting into Sheet1!C3</div>
+    <label>Date and time</label>
+    <div class="field"><span>12/11/2026, 04:00 PM</span><span>&#128197;</span></div>
+    <div class="btns"><div class="btn">Now</div><div class="btn">Clear</div></div>
+    <label>Time zone</label>
+    <div class="field"><span>GMT+0 (default)</span><span>&#9662;</span></div>
+    <div class="muted" style="margin-top:6px">Offset: GMT+00:00</div>
+    <div class="preview">Inserts: 2026-11-12T16:00:00.000Z</div>
+    <div class="row"><div class="btn">Cancel</div><div class="btn primary">Insert</div></div>
+  </div>
+  <div class="cal">
+    <div style="display:flex;justify-content:space-between"><b>November 2026</b><span>&lsaquo; &rsaquo;</span></div>
+    <div class="grid">
+      <span class="muted">Su</span><span class="muted">Mo</span><span class="muted">Tu</span><span class="muted">We</span><span class="muted">Th</span><span class="muted">Fr</span><span class="muted">Sa</span>
+      <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
+      <span>8</span><span>9</span><span>10</span><span>11</span><span class="on">12</span><span>13</span><span>14</span>
+      <span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span>
+    </div>
+    <div class="times"><div>03</div><div class="on">04</div><div>00</div><div class="on">PM</div></div>
+  </div>
+  <div class="tag">Pick date and time together, get ISO 8601</div>
+</body></html>
