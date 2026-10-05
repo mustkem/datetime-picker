@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= HtmlService.createHtmlOutputFromFile('Styles').getContent() ?>
+  </head>
+  <body>
+    <div class="target" id="target"></div>
+
+    <label for="dt">Date and time</label>
+    <div class="row">
+      <input type="datetime-local" id="dt">
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button type="button" id="now">Now</button>
+      <button type="button" id="clear">Clear</button>
+    </div>
+
+    <label for="zone">Time zone</label>
+    <select id="zone"></select>
+    <div class="muted" id="offset"></div>
+
+    <div class="check">
+      <input type="checkbox" id="toGmt">
+      <label for="toGmt" style="margin:0;font-size:13px;color:#202124">Convert to GMT before inserting</label>
+    </div>
+
+    <div class="muted error" id="err"></div>
+    <div class="actions">
+      <button type="button" onclick="google.script.host.close()">Cancel</button>
+      <button type="button" class="primary" id="ok">Insert</button>
+    </div>
+
+    <script>
+      var DATA = <?!= data ?>;
+      var $ = function (id) { return document.getElementById(id); };
+
+      function zones() {
+        var list = [];
+        try { list = Intl.supportedValuesOf('timeZone'); } catch (e) {}
+        if (!list.length) list = ['UTC', 'Europe/London', 'America/New_York', 'America/Los_Angeles', 'Asia/Kolkata', 'Asia/Tokyo', 'Australia/Sydney', 'Pacific/Auckland'];
+        return ['GMT'].concat(list.filter(function (z) { return z !== 'GMT' && z !== 'UTC'; }));
+      }
+
+      // Offset of `zone` at the picked wall-clock moment, e.g. "GMT+05:30".
+      function offsetLabel(zone, value) {
+        if (zone === 'GMT') return 'GMT+00:00';
+        var d = value ? new Date(value + ':00Z') : new Date();
+        try {
+          var part = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'longOffset' })
+            .formatToParts(d).filter(function (p) { return p.type === 'timeZoneName'; })[0];
+          return part ? part.value.replace(/^GMT$/, 'GMT+00:00') : '';
+        } catch (e) { return ''; }
+      }
+
+      function nowIn(zone) {
+        var p = {};
+        new Intl.DateTimeFormat('en-CA', {
+          timeZone: zone === 'GMT' ? 'UTC' : zone, hourCycle: 'h23',
+          year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+        }).formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
+        return p.year + '-' + p.month + '-' + p.day + 'T' + p.hour + ':' + p.minute;
+      }
+
+      function refresh() {
+        var z = $('zone').value;
+        $('offset').textContent = 'Offset: ' + offsetLabel(z, $('dt').value);
+        $('toGmt').disabled = z === 'GMT';
+      }
+
+      // Init
+      $('target').textContent = 'Inserting into ' + DATA.target +
+        (DATA.cellCount > 1 ? ' (' + DATA.cellCount + ' cells)' : '');
+      var sel = $('zone');
+      zones().forEach(function (z) {
+        var o = document.createElement('option');
+        o.value = z; o.textContent = z.replace(/_/g, ' ');
+        sel.appendChild(o);
+      });
+      sel.value = zones().indexOf(DATA.zone) > -1 ? DATA.zone : 'GMT';
+      $('dt').value = DATA.current || '';
+      $('toGmt').checked = !!DATA.toGmt;
+      refresh();
+
+      sel.addEventListener('change', refresh);
+      $('dt').addEventListener('input', refresh);
+      $('now').addEventListener('click', function () { $('dt').value = nowIn(sel.value); refresh(); });
+      $('clear').addEventListener('click', function () { $('dt').value = ''; refresh(); });
+
+      $('ok').addEventListener('click', function () {
+        var v = $('dt').value;
+        if (!v) { $('err').textContent = 'Pick a date and time first.'; return; }
+        v = v.slice(0, 16);
+        $('err').textContent = '';
+        var btn = $('ok');
+        btn.disabled = true;
+        google.script.run
+          .withSuccessHandler(function () { google.script.host.close(); })
+          .withFailureHandler(function (e) { $('err').textContent = e.message; btn.disabled = false; })
+          .insertDateTime(v, sel.value, DATA.target, $('toGmt').checked && sel.value !== 'GMT');
+      });
+    </script>
+  </body>
+</html>

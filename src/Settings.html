@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= HtmlService.createHtmlOutputFromFile('Styles').getContent() ?>
+  </head>
+  <body>
+    <label for="zone">Default time zone</label>
+    <select id="zone"></select>
+
+    <label for="dateOrder">Date format</label>
+    <select id="dateOrder">
+      <option value="dmy">dd/mm/yyyy</option>
+      <option value="mdy">mm/dd/yyyy</option>
+      <option value="ymd">yyyy-mm-dd</option>
+    </select>
+
+    <label for="clock">Time format</label>
+    <select id="clock">
+      <option value="12">12-hour (04:00 PM)</option>
+      <option value="24">24-hour (16:00)</option>
+    </select>
+
+    <div class="check">
+      <input type="checkbox" id="showZone">
+      <label for="showZone" style="margin:0;font-size:13px;color:#202124">Show the time zone in the cell</label>
+    </div>
+    <div class="check">
+      <input type="checkbox" id="toGmt">
+      <label for="toGmt" style="margin:0;font-size:13px;color:#202124">Convert to GMT by default</label>
+    </div>
+
+    <div class="muted">Settings are saved for this spreadsheet only.</div>
+    <div class="muted error" id="err"></div>
+    <div class="actions">
+      <button type="button" onclick="google.script.host.close()">Cancel</button>
+      <button type="button" class="primary" id="save">Save</button>
+    </div>
+
+    <script>
+      var S = <?!= data ?>;
+      var $ = function (id) { return document.getElementById(id); };
+      var list = [];
+      try { list = Intl.supportedValuesOf('timeZone'); } catch (e) {}
+      ['GMT'].concat(list.filter(function (z) { return z !== 'GMT' && z !== 'UTC'; })).forEach(function (z) {
+        var o = document.createElement('option');
+        o.value = z; o.textContent = z.replace(/_/g, ' ');
+        $('zone').appendChild(o);
+      });
+      $('zone').value = S.zone;
+      $('dateOrder').value = S.dateOrder;
+      $('clock').value = S.clock;
+      $('showZone').checked = S.showZone;
+      $('toGmt').checked = S.toGmt;
+
+      $('save').addEventListener('click', function () {
+        var btn = $('save');
+        btn.disabled = true;
+        google.script.run
+          .withSuccessHandler(function () { google.script.host.close(); })
+          .withFailureHandler(function (e) { $('err').textContent = e.message; btn.disabled = false; })
+          .saveSettings({
+            zone: $('zone').value, dateOrder: $('dateOrder').value, clock: $('clock').value,
+            showZone: $('showZone').checked, toGmt: $('toGmt').checked
+          });
+      });
+    </script>
+  </body>
+</html>
