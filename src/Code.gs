@@ -69,7 +69,7 @@ function openSettings() {
 }
 
 function openHelp() {
-  var html = HtmlService.createHtmlOutputFromFile('Help').setWidth(400).setHeight(330);
+  var html = HtmlService.createTemplateFromFile('Help').evaluate().setWidth(400).setHeight(330);
   SpreadsheetApp.getUi().showModalDialog(html, 'DateTime Picker help');
 }
 
