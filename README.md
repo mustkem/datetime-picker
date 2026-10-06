@@ -1,6 +1,6 @@
-# DateTime Picker for Google Sheets
+# DateTime Picker for Google Sheets™
 
-Google Sheets has a built-in date picker, but no way to pick a **time**. DateTime Picker is a free, open-source add-on that lets you pick a date and a time together, in any time zone, and drop it into the selected cells as a real date value.
+Google Sheets™ has a built-in date picker, but no way to pick a **time**. DateTime Picker is a free, open-source add-on that lets you pick a date and a time together, in any time zone, and drop it into the selected cells as a real date value.
 
 ## Features
 
@@ -63,3 +63,11 @@ Issues and pull requests are welcome.
 ## License
 
 [MIT](LICENSE)
+
+## Support
+
+Email mo.mustkem@gmail.com or see https://mustkem.github.io/datetime-picker/support.html
+
+---
+
+Google Sheets™ and Google Workspace™ are trademarks of Google LLC. This project is not affiliated with Google.
