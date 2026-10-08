@@ -1,6 +1,6 @@
 {
   "timeZone": "Etc/GMT",
-  "exceptionLogging": "STACKDRIVER",
+  "exceptionLogging": "NONE",
   "runtimeVersion": "V8",
   "oauthScopes": [
     "https://www.googleapis.com/auth/spreadsheets.currentonly",
