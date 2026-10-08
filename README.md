@@ -18,7 +18,10 @@ Google Sheets™ has a built-in date picker, but no way to pick a **time**. Date
 
 From the Google Workspace Marketplace (link added after approval), or install it yourself from source below.
 
-Website, privacy policy and terms: https://mustkem.github.io/datetime-picker/
+- Website: https://mustkeemk.com/datetime-picker
+- Privacy policy: https://mustkeemk.com/datetime-picker/privacy
+- Terms of service: https://mustkeemk.com/datetime-picker/terms
+- Support: https://mustkeemk.com/datetime-picker/support
 
 ## Usage
 
@@ -49,11 +52,20 @@ Or copy each file in `src/` into **Extensions > Apps Script** of any spreadsheet
 | `spreadsheets.currentonly` | Write the picked value into the spreadsheet you are using, nothing else |
 | `script.container.ui` | Show the menu and the picker dialog |
 
+## Privacy and data
+
+- The add-on requests only two OAuth scopes: `spreadsheets.currentonly` (read the selected cell to prefill the picker, write the value you pick, and save settings in the spreadsheet's document properties) and `script.container.ui` (show the menu and dialogs).
+- It makes no external network calls and has no servers, analytics or tracking.
+- It uses no third-party AI or machine learning services, and no user data is used to train AI models.
+- Its use of information received from Google APIs adheres to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements.
+
+Full policy: https://mustkeemk.com/datetime-picker/privacy
+
 ## Project layout
 
 ```
 src/        Apps Script source (Code.gs, dialogs, manifest)
-docs/       GitHub Pages site: home, privacy policy, terms
+docs/       Legacy GitHub Pages site (canonical site: https://mustkeemk.com/datetime-picker)
 ```
 
 ## Contributing
@@ -66,7 +78,7 @@ Issues and pull requests are welcome.
 
 ## Support
 
-Email mo.mustkem@gmail.com or see https://mustkem.github.io/datetime-picker/support.html
+Email mo.mustkem@gmail.com or see https://mustkeemk.com/datetime-picker/support
 
 ---
 
