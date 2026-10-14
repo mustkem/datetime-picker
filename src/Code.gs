@@ -28,12 +28,38 @@ function onInstall(e) {
 function onOpen(e) {
   SpreadsheetApp.getUi()
     .createAddonMenu()
-    .addItem('Pick date and time', 'openPicker')
-    .addItem('Insert current date and time', 'insertNow')
+    .addItem('Pick date and time', 'menuPicker')
+    .addItem('Insert current date and time', 'menuInsertNow')
     .addSeparator()
-    .addItem('Settings', 'openSettings')
-    .addItem('Help', 'openHelp')
+    .addItem('Settings', 'menuSettings')
+    .addItem('Help', 'menuHelp')
     .addToUi();
+}
+
+function menuPicker() { guard_(openPicker); }
+function menuInsertNow() { guard_(insertNow); }
+function menuSettings() { guard_(openSettings); }
+function menuHelp() { guard_(openHelp); }
+
+// Menu items run through this, so a failure to reach the spreadsheet shows an
+// explanation instead of a raw exception. Apps Script runs the add-on as the
+// browser's default Google account; when that is not the account the sheet is
+// open in, spreadsheet calls can fail with "No item with the given ID".
+var ACCESS_RE = /No item with the given ID|do not have permission|Authorization is required|PERMISSION_DENIED/i;
+
+function guard_(fn) {
+  try {
+    fn();
+  } catch (err) {
+    var message = String((err && err.message) || err);
+    if (ACCESS_RE.test(message)) {
+      message = 'DateTime Picker could not access this spreadsheet.\n\n' +
+        'This can happen when your browser is signed in to more than one Google account. ' +
+        'Open the sheet in a window signed in to one account only (a separate Chrome ' +
+        'profile or an incognito window), then try again.';
+    }
+    SpreadsheetApp.getUi().alert(message);
+  }
 }
 
 /* ---------- Dialogs ---------- */
@@ -57,7 +83,7 @@ function openPicker() {
     output: settings.output
   });
   SpreadsheetApp.getUi().showModalDialog(
-    t.evaluate().setWidth(380).setHeight(350),
+    t.evaluate().setWidth(380).setHeight(400),
     'Pick date and time'
   );
 }
