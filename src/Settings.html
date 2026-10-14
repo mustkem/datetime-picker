@@ -49,6 +49,14 @@
     <script>
       var S = <?!= data ?>;
       var $ = function (id) { return document.getElementById(id); };
+
+      // Turns a server error into a message the user can act on.
+      function friendly(e) {
+        var m = String((e && e.message) || e);
+        return /No item with the given ID|do not have permission|Authorization is required|PERMISSION_DENIED/i.test(m)
+          ? 'DateTime Picker could not open this sheet. If your browser is signed in to more than one Google account, open the sheet in a window signed in to one account only, then try again.'
+          : m;
+      }
       var list = [];
       try { list = Intl.supportedValuesOf('timeZone'); } catch (e) {}
       ['GMT'].concat(list.filter(function (z) { return z !== 'GMT' && z !== 'UTC'; })).forEach(function (z) {
@@ -72,7 +80,7 @@
         btn.disabled = true;
         google.script.run
           .withSuccessHandler(function () { google.script.host.close(); })
-          .withFailureHandler(function (e) { $('err').textContent = e.message; btn.disabled = false; })
+          .withFailureHandler(function (e) { $('err').textContent = friendly(e); btn.disabled = false; })
           .saveSettings({
             output: $('output').value, zone: $('zone').value, toGmt: $('toGmt').checked,
             dateOrder: $('dateOrder').value, clock: $('clock').value, showZone: $('showZone').checked

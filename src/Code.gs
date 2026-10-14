@@ -36,29 +36,42 @@ function onOpen(e) {
     .addToUi();
 }
 
-function menuPicker() { guard_(openPicker); }
-function menuInsertNow() { guard_(insertNow); }
-function menuSettings() { guard_(openSettings); }
-function menuHelp() { guard_(openHelp); }
+function menuPicker() { guard_(openPicker, 'opening the picker'); }
+function menuInsertNow() { guard_(insertNow, 'inserting the current date and time'); }
+function menuSettings() { guard_(openSettings, 'opening settings'); }
+function menuHelp() { guard_(openHelp, 'opening help'); }
 
-// Menu items run through this, so a failure to reach the spreadsheet shows an
-// explanation instead of a raw exception. Apps Script runs the add-on as the
-// browser's default Google account; when that is not the account the sheet is
-// open in, spreadsheet calls can fail with "No item with the given ID".
+// Menu items run through this, so a failure shows the add-on's own error
+// dialog instead of the raw exception on Google's error bar. Apps Script runs
+// the add-on as the browser's default Google account; when that is not the
+// account the sheet is open in, spreadsheet calls can fail with
+// "No item with the given ID".
 var ACCESS_RE = /No item with the given ID|do not have permission|Authorization is required|PERMISSION_DENIED/i;
 
-function guard_(fn) {
+function guard_(fn, step) {
   try {
     fn();
   } catch (err) {
-    var message = String((err && err.message) || err);
-    if (ACCESS_RE.test(message)) {
-      message = 'DateTime Picker could not access this spreadsheet.\n\n' +
-        'This can happen when your browser is signed in to more than one Google account. ' +
-        'Open the sheet in a window signed in to one account only (a separate Chrome ' +
-        'profile or an incognito window), then try again.';
-    }
-    SpreadsheetApp.getUi().alert(message);
+    showError_(step, err);
+  }
+}
+
+function showError_(step, err) {
+  var detail = String((err && err.message) || err);
+  var access = ACCESS_RE.test(detail);
+  try {
+    var t = HtmlService.createTemplateFromFile('Error');
+    t.data = JSON.stringify({ step: step, access: access, detail: access ? '' : detail });
+    SpreadsheetApp.getUi().showModalDialog(
+      t.evaluate().setWidth(380).setHeight(access ? 330 : 240),
+      access ? 'DateTime Picker could not open this sheet' : 'Something went wrong'
+    );
+  } catch (e) {
+    // The dialog itself could not be shown; fall back to a plain message.
+    SpreadsheetApp.getUi().alert(access
+      ? 'DateTime Picker could not open this sheet. If your browser is signed in to more ' +
+        'than one Google account, open the sheet in a window signed in to one account only, then try again.'
+      : 'Something went wrong while ' + step + ': ' + detail);
   }
 }
 
@@ -105,8 +118,13 @@ function openHelp() {
 /* ---------- Settings (stored per spreadsheet) ---------- */
 
 function getSettings() {
-  var raw = PropertiesService.getDocumentProperties().getProperty('settings');
-  var saved = raw ? JSON.parse(raw) : {};
+  var saved = {};
+  try {
+    var raw = PropertiesService.getDocumentProperties().getProperty('settings');
+    if (raw) saved = JSON.parse(raw);
+  } catch (e) {
+    // Saved settings could not be read; carry on with the defaults.
+  }
   var out = {};
   for (var k in DEFAULTS) out[k] = saved.hasOwnProperty(k) ? saved[k] : DEFAULTS[k];
   return out;

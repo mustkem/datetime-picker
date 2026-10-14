@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= HtmlService.createHtmlOutputFromFile('Styles').getContent() ?>
+  </head>
+  <body>
+    <div id="access" class="group">
+      <p>This usually happens when your browser is signed in to more than one Google account.</p>
+      <p><b>To fix it:</b></p>
+      <ol>
+        <li>Open this sheet in a window signed in to one Google account only, such as an incognito window or a separate Chrome profile.</li>
+        <li>Run Extensions &gt; DateTime Picker again.</li>
+      </ol>
+    </div>
+    <div id="other" class="group">
+      <p id="step"></p>
+      <p class="muted" id="detail"></p>
+      <p>Try again. If it keeps happening, contact support.</p>
+    </div>
+    <p><a href="https://mustkeemk.com/datetime-picker/support" target="_blank">Get help</a></p>
+    <div class="actions">
+      <button type="button" class="primary" onclick="google.script.host.close()">Close</button>
+    </div>
+
+    <script>
+      var E = <?!= data ?>;
+      var $ = function (id) { return document.getElementById(id); };
+      if (E.access) {
+        $('access').className = 'group show';
+      } else {
+        $('other').className = 'group show';
+        $('step').textContent = 'DateTime Picker ran into a problem while ' + E.step + '.';
+        $('detail').textContent = E.detail;
+      }
+    </script>
+  </body>
+</html>
